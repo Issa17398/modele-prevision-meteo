@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  meteo:
+    build: .
+    container_name: mini_meteo_model
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./src:/app/src        # Code source monté pour pouvoir éditer depuis VS Code
+      - ./include:/app/include
+      - ./output:/app/output  # Résultats sauvegardés
+      - ./python:/app/python  # Scripts Python pour visualisation
+      - ./tests:/app/tests
+    working_dir: /app
+    command: bash

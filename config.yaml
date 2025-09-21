@@ -1,0 +1,16 @@
+# Paramètres du modèle météo simplifié
+
+grid:
+  nx: 100         # Nombre de points en X
+  ny: 100         # Nombre de points en Y
+  dx: 0.1         # Pas en X
+  dy: 0.1         # Pas en Y
+
+time:
+  dt: 0.01        # Pas de temps
+  steps: 200      # Nombre total de pas de temps
+  save_interval: 10  # Sauvegarde chaque N pas
+
+physics:
+  velocity: 1.0   # Vitesse moyenne du flux
+  diffusion: 0.01 # Coefficient de diffusion
