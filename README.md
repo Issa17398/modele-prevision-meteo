@@ -49,11 +49,6 @@ $$
 
 Schéma explicite aux différences finies :
 
-$$
-u_{i,j}^{n+1} = u_{i,j}^n - \Delta t \left( v_x \frac{u_{i+1,j}^n - u_{i-1,j}^n}{2\Delta x} + v_y \frac{u_{i,j+1}^n - u_{i,j-1}^n}{2\Delta y} \right)
-+ D \Delta t \left( \frac{u_{i+1,j}^n - 2u_{i,j}^n + u_{i-1,j}^n}{\Delta x^2} + \frac{u_{i,j+1}^n - 2u_{i,j}^n + u_{i,j-1}^n}{\Delta y^2} \right)
-$$
-
 ⚠️ **Condition CFL (stabilité)** :
 
 $$
