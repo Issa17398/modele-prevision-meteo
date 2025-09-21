@@ -112,17 +112,17 @@ Chaque fichier source (`.c`) implémente un **aspect précis de la simulation nu
   Implémente la diffusion de la chaleur/polluant via la discrétisation du Laplacien.  
 
 - **`parallel.c`** → Parallélisation.  
-  Division du domaine, communication entre sous-domaines via **MPI**, parallélisation de boucles via **OpenMP**. Permet d’exploiter plusieurs cœurs/machines.  
+  Division du domaine, communication entre sous-domaines via **MPI**, parallélisation de boucles via **OpenMP**.  
 
 - **`io.c`** → Entrées/Sorties.  
-  Lit les paramètres d’entrée (taille, pas de temps, nombre d’itérations) et sauvegarde les résultats (CSV, images, etc.) pour la visualisation.  
+  Lit les paramètres d’entrée et sauvegarde les résultats (CSV, images, etc.) pour la visualisation.  
 
 ---
 
 ## 4. Visualisation
 
-- **Images statiques** générées avec `visualize.py` → production de cartes de température ou concentration.  
-- **Animations** générées avec `animate.py` → production de vidéos montrant l’évolution temporelle du champ simulé.  
+- **Images statiques** générées avec `visualize.py` → cartes de température ou concentration.  
+- **Animations** générées avec `animate.py` → vidéos montrant l’évolution temporelle du champ simulé.  
 
 Les résultats peuvent être stockés dans le dossier `figures/` ou `animations/`.  
 
@@ -135,8 +135,6 @@ Il contient :
 - l’environnement Python (visualisation),  
 - les dépendances de compilation (MPI, OpenMP, GCC),  
 - et l’organisation des fichiers (`src/`, `include/`, `output/`, `figures/`).  
-
-L’utilisateur peut donc compiler, exécuter et visualiser la simulation de manière isolée et portable.  
 
 ---
 
@@ -151,10 +149,8 @@ docker-compose build --no-cache
 # Lancer un conteneur interactif
 docker-compose run meteo bash
 
-# Créer le dossier build
+# Créer le dossier build et compiler
 mkdir build && cd build
-
-# Compilation
 cmake ..
 make -j$(nproc)
 
@@ -163,23 +159,3 @@ mkdir -p /app/output
 
 # Exécution de la simulation MPI
 mpirun --allow-run-as-root -np 4 ./build/meteo
-
-[MPI Rank 2] OpenMP threads = 8
-[MPI Rank 3] OpenMP threads = 8
-[MPI Rank 1] OpenMP threads = 8
-[MPI Rank 0] OpenMP threads = 8
-Simulation 100x100, 100 pas de temps
-MPI (Message Passing Interface) est utilisé pour distribuer le calcul entre plusieurs processus, éventuellement sur plusieurs machines ou cœurs. Ici, on a 4 processus MPI : Rank 0, 1, 2 et 3. OpenMP permet de tirer parti des cœurs multiples d’un CPU pour accélérer les calculs dans un processus donné. Ici, chaque processus MPI utilise 8 threads, donc la simulation peut utiliser 32 cœurs au total si disponible (4 MPI × 8 OpenMP). En résumé : chaque processus MPI gère une partie du domaine, et OpenMP accélère les calculs dans cette partie.
-
-
-# Test advection
-gcc -fopenmp -Iinclude src/grid.c src/advection.c tests/test_advection.c -o test_advection -lm
-./test_advection
-
-# Test diffusion
-gcc -fopenmp -Iinclude src/grid.c src/diffusion.c tests/test_diffusion.c -o test_diffusion -lm
-./test_diffusion
-
-le test du flux net de diffusion au point (5,5) est de -40 unités. Cela correspond au fait qu’une "boule chaude" ou concentration initiale diminue en intensité à ce point car elle se disperse dans l’espace.
-Le test du flux net d’advection au point (5,5) = -15 unités correspond à l’effet du transport par le vent ou le courant dans le domaine. Concrètement, cela signifie que la concentration ou la température au point (5,5) diminue parce qu’elle est transportée vers un autre point de la grille.#   m o d e l e - p r e v i s i o n - m e t e o  
- 
