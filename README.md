@@ -7,15 +7,15 @@
 La **prévision météorologique numérique (NWP – Numerical Weather Prediction)** repose sur la **résolution numérique d’équations aux dérivées partielles (EDP)** décrivant l’évolution des champs atmosphériques (température, pression, humidité, vitesse du vent, etc.).  
 Les grands modèles comme **ARPEGE** ou **AROME** s’appuient sur des **supercalculateurs** et des millions de lignes de code, mais le principe de base reste la résolution des équations de la dynamique des fluides.
 
-👉 Dans ce projet, nous développons un **modèle réduit** illustrant ces concepts :
+👉 Dans ce projet, nous développons un **modèle réduit** permettant d’illustrer ces concepts :
 
-- **Équation d’advection-diffusion** pour représenter le transport et la dispersion d’une grandeur scalaire (température, polluant, humidité).  
-- **Méthode des différences finies** pour la résolution numérique.  
-- **Parallélisation** via OpenMP et MPI pour exploiter les architectures multi-cœurs.  
-- **Reproductibilité** grâce à Docker.  
-- **Visualisations dynamiques** (images et animations) pour interpréter les résultats.  
+- Utilisation d’une **équation d’advection-diffusion** pour représenter le transport et la dispersion d’une grandeur scalaire (par exemple : température, concentration d’un polluant, humidité).  
+- Résolution numérique par **méthode des différences finies**.  
+- Mise en œuvre de la **parallélisation** (OpenMP et MPI) afin de tirer parti des architectures multi-cœurs.  
+- Déploiement reproductible grâce à **Docker**.  
+- Génération de **visualisations dynamiques** (images et animations) pour interpréter les résultats.  
 
-Ce projet combine **mathématiques appliquées, simulation numérique et informatique scientifique**, avec une orientation pratique pour l’apprentissage du **HPC (High Performance Computing)**.
+Ce projet combine donc **mathématiques appliquées, simulation numérique et informatique scientifique**, avec une orientation pratique pour l’apprentissage du **HPC (High Performance Computing)**.
 
 ---
 
@@ -23,31 +23,52 @@ Ce projet combine **mathématiques appliquées, simulation numérique et informa
 
 ### 2.1. Advection pure
 
+On considère une grandeur $u(x,y,t)$ (température, polluant, humidité) transportée par un champ de vitesse constant $\vec{v}=(v_x,v_y)$.
+
+**Équation :**
+
 $$
 \frac{\partial u}{\partial t} + v_x \frac{\partial u}{\partial x} + v_y \frac{\partial u}{\partial y} = 0
 $$
 
-👉 Le champ $u$ est transporté par le vent **sans se déformer**.
+👉 **Interprétation** : le champ $u$ est transporté par le vent **sans se déformer**.
+
+---
 
 ### 2.2. Diffusion pure
+
+La diffusion est modélisée par l’**équation de la chaleur** :
 
 $$
 \frac{\partial u}{\partial t} = D \left( \frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} \right)
 $$
 
-👉 Une "boule chaude" placée au centre se **dissipe progressivement**.
+👉 **Interprétation** : une "boule chaude" placée au centre se **dissipe progressivement**.
 
-### 2.3. Advection-diffusion
+---
+
+### 2.3. Équation couplée : advection-diffusion
+
+En combinant les deux phénomènes :
 
 $$
 \frac{\partial u}{\partial t} + v_x \frac{\partial u}{\partial x} + v_y \frac{\partial u}{\partial y} = D \left( \frac{\partial^2 u}{\partial x^2} + \frac{\partial^2 u}{\partial y^2} \right)
 $$
 
-👉 $u$ est **transporté** par le vent tout en **se diffusant**.
+👉 **Interprétation** : $u$ est **transporté** par le vent tout en **se diffusant**.
+
+---
 
 ### 2.4. Discrétisation numérique
 
-Schéma explicite aux différences finies :
+Le domaine $[0,L_x] \times [0,L_y]$ est discrétisé en $N_x \times N_y$ points.
+
+**Schéma explicite aux différences finies :**
+
+$$
+u_{i,j}^{n+1} = u_{i,j}^n - \Delta t \left( v_x \frac{u_{i+1,j}^n - u_{i-1,j}^n}{2\Delta x} + v_y \frac{u_{i,j+1}^n - u_{i,j-1}^n}{2\Delta y} \right)
++ D \Delta t \left( \frac{u_{i+1,j}^n - 2u_{i,j}^n + u_{i-1,j}^n}{\Delta x^2} + \frac{u_{i,j+1}^n - 2u_{i,j}^n + u_{i,j-1}^n}{\Delta y^2} \right)
+$$
 
 ⚠️ **Condition CFL (stabilité)** :
 
@@ -61,49 +82,80 @@ $$
 
 ### 📂 include/
 
-Déclarations de fonctions, structures et constantes pour modularité et réutilisation.
+Le dossier `include/` contient les fichiers d’en-tête (`.h`) qui déclarent les **fonctions, structures et constantes** du projet.  
+
+Rôles principaux :
+- **Modularité** : séparer déclarations (`.h`) et implémentations (`.c`).  
+- **Réutilisation** : un même `.h` peut être inclus dans plusieurs modules.  
+- **Cohérence** : garantit la correspondance des types et prototypes.  
+- **Lisibilité** : fournit une vue d’ensemble claire des fonctions disponibles.  
+
+---
 
 ### 📂 src/
 
-- **`main.c`** : point d’entrée, coordonne modules et simulation.  
-- **`grid.c`** : gestion du domaine de calcul et initialisation.  
-- **`boundary.c`** : conditions aux limites (Dirichlet, Neumann, périodiques).  
-- **`advection.c`** : schémas numériques pour transport.  
-- **`diffusion.c`** : propagation isotrope.  
-- **`parallel.c`** : parallélisation MPI + OpenMP.  
-- **`io.c`** : lecture des paramètres et sauvegarde des résultats.
+Chaque fichier source (`.c`) implémente un **aspect précis de la simulation numérique**.  
+
+- **`main.c`** → Point d’entrée du programme.  
+  Coordonne les modules, initialise la grille, applique les conditions aux limites, lance l’advection et la diffusion, puis sauvegarde les résultats.  
+
+- **`grid.c`** → Gestion du domaine de calcul.  
+  Crée et initialise la grille ($N_x \times N_y$), définit le pas spatial, réserve la mémoire pour les champs physiques.  
+
+- **`boundary.c`** → Conditions aux limites.  
+  Implémente Dirichlet, Neumann ou périodiques, nécessaires à la stabilité et au réalisme de la simulation.  
+
+- **`advection.c`** → Transport des grandeurs.  
+  Contient les schémas numériques (Upwind, Lax-Wendroff) pour simuler le déplacement d’une grandeur sous l’effet du vent.  
+
+- **`diffusion.c`** → Propagation isotrope.  
+  Implémente la diffusion de la chaleur/polluant via la discrétisation du Laplacien.  
+
+- **`parallel.c`** → Parallélisation.  
+  Division du domaine, communication entre sous-domaines via **MPI**, parallélisation de boucles via **OpenMP**.  
+
+- **`io.c`** → Entrées/Sorties.  
+  Lit les paramètres d’entrée et sauvegarde les résultats (CSV, images, etc.) pour la visualisation.  
 
 ---
 
 ## 4. Visualisation
 
-- **`visualize.py`** → cartes statiques de température ou concentration.  
-- **`animate.py`** → vidéos de l’évolution temporelle du champ simulé.  
+- **Images statiques** générées avec `visualize.py` → cartes de température ou concentration.  
+- **Animations** générées avec `animate.py` → vidéos montrant l’évolution temporelle du champ simulé.  
 
-Résultats stockés dans `figures/` et `animations/`.
+Les résultats peuvent être stockés dans le dossier `figures/` ou `animations/`.  
 
 ---
 
 ## 5. Déploiement avec Docker
 
-Conteneur Docker contient :
-
-- Python pour visualisation  
-- MPI, OpenMP, GCC pour compilation  
-- Organisation des fichiers (`src/`, `include/`, `output/`, `figures/`)  
+Un conteneur **Docker** garantit la reproductibilité.  
+Il contient :  
+- l’environnement Python (visualisation),  
+- les dépendances de compilation (MPI, OpenMP, GCC),  
+- et l’organisation des fichiers (`src/`, `include/`, `output/`, `figures/`).  
 
 ---
 
-## 6. Workflow et tests
+## 6. Déploiement et workflow
 
-### 6.1. Compilation et exécution
+### 6.1. Compilation et exécution avec Docker
 
 ```bash
+# Build de l'image Docker
 docker-compose build --no-cache
+
+# Lancer un conteneur interactif
 docker-compose run meteo bash
 
+# Créer le dossier build et compiler
 mkdir build && cd build
 cmake ..
 make -j$(nproc)
+
+# Créer le dossier de sortie
 mkdir -p /app/output
+
+# Exécution de la simulation MPI
 mpirun --allow-run-as-root -np 4 ./build/meteo
